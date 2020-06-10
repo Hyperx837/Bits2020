@@ -15,6 +15,7 @@ QPushButton {
 
 QPushButton::pressed {
     background-color: #2A81AA;
+    opacity: 0.2;
 }
 
 QLineEdit {
