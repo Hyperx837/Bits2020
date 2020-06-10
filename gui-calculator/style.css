@@ -1,20 +1,24 @@
 QMainWindow {
-    background-color: #ff3837;
+    background-color: #002c44;
     font-size: 20px;
     padding-left: 55px;
 }
 
 QPushButton {
-    background-color: #002c44;
-    color: #60a6ff;
+    background-color: #006daa;
+    color: #e1e6ff;
     border-width: 4px;
     border-radius: 35px;
     width: 30px;
     height: 60px;
 }
 
+QPushButton::pressed {
+    background-color: #2A81AA;
+}
+
 QLineEdit {
-    align-self: center;
-    background-color: #efff47;
+    background-color: #e1e6ff;
     margin-left: 25px;
+    padding-right: 10px;
 }
