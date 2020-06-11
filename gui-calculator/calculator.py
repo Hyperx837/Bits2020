@@ -117,7 +117,10 @@ class CalcCtrl:
     def make_clear(self, func):
         @functools.wraps(func)
         def inner():
-            if self.window.clear:
+            if self.text in self.window.operations:
+                self.window.clear = False
+
+            if self.window.clear and self.text:
                 self.label.setText('0')
                 self.window.clear = False
             func()
