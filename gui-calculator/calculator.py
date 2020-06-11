@@ -1,6 +1,6 @@
-import sys
-from typing import Dict, Generator, Tuple
 import functools
+import sys
+from typing import Dict, Generator, Tuple, List, Optional, Callable
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeyEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, \
@@ -10,13 +10,13 @@ __author__ = 'Anupama Dissanayake'
 
 
 class CalcUI(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.buttons: Dict[str, CalcCtrl] = {}
         self.chars: str = '789+456-123\u00f7.0\u232B\u00d7=C%'
-        self.operations = {'+', '-', '\u00f7', '\u00d7', '%'}
-        self.special_charcs = {'C', '=', '\u232B'}
-        self.clear = False
+        self.operations: set = {'+', '-', '\u00f7', '\u00d7', '%'}
+        self.special_charcs: set = {'C', '=', '\u232B'}
+        self.clear: bool = False
         self.setWindowTitle('Calculator')
         self.setFixedSize(450, 500)
         self._central_widget: QWidget = QWidget(self)
@@ -27,7 +27,7 @@ class CalcUI(QMainWindow):
         self._make_buttons()
         self.style_sheet: str = open('./style.css').read()
         self.setStyleSheet(self.style_sheet)
-        self.event_map = {
+        self.event_map: Dict[Qt.Key, str] = {
             Qt.Key_Backspace: '\u232B',
             Qt.Key_Asterisk: '\u00d7',
             Qt.Key_Slash: '\u00f7',
@@ -42,11 +42,11 @@ class CalcUI(QMainWindow):
         }
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
-        charac = self.event_map.get(event.key())
+        charac: str = self.event_map.get(event.key())
         if charac:
             self.buttons[charac].func()
 
-    def _make_display(self):
+    def _make_display(self) -> None:
         self.display: QLineEdit = QLineEdit('0')
         self.display.setFixedSize(400, 65)
         self.display.setFont(QFont("Arial", 27))
@@ -54,17 +54,15 @@ class CalcUI(QMainWindow):
         self.display.setReadOnly(True)
         self.arrangement.addWidget(self.display)
 
-    def _make_buttons(self):
-        size = 70
+    def _make_buttons(self) -> None:
         font: QFont = QFont("Consolas", 13)
         buttons_layout: QGridLayout = QGridLayout()
         positions: Generator[Tuple[int, int]] = (divmod(num, 4) for num in range(20))
-        span = [0, 0]
+        span: List[int] = [0, 0]
 
         for pos, symbol in zip(positions, self.chars):
             button: QPushButton = QPushButton(symbol)
-
-            button.setFixedSize(size, size)
+            button.setFixedSize(70, 70)
             button.setFont(font)
             if symbol == '=':
                 span[1] += 1
@@ -86,35 +84,37 @@ class CalcUI(QMainWindow):
 
 
 class CalcCtrl:
-    def __init__(self, button, window):
-        self.button: QPushButton = button
-        self.window: CalcUI = window
+    def __init__(self, button: QPushButton, window: CalcUI) -> None:
+        self.button = button
+        self.window = window
         self.label: QLineEdit = window.display
-        self.text = self.button.text()
-        self._expression = '0'
-        self.func = None
-        self.clear = False
+        self.text: str = self.button.text()
+        self._expression: str = '0'
+        self.func: Optional[Callable] = None
+        self.clear: bool = False
         self._create_connections()
 
     @property
-    def expression(self):
+    def expression(self) -> str:
         return self.label.text()
 
     @expression.setter
-    def expression(self, value):
+    def expression(self, value: str) -> None:
         self._expression = value
         self.label.setText(value)
         self.window.display.setFocus()
 
-    def _create_connections(self):
-        self.func = self.make_clear({
-            'C': lambda: self.label.setText('0'),
-            '\u232B': lambda: self.backspace(self.expression),
-            '=': lambda: self.evaluate()  # this does not work when '=': self.evaluate (this is may be a scope issue)
-        }.get(self.text, lambda: self.on_click(self.window.operations)))
+    def _create_connections(self) -> None:
+        self.func = self.make_clear(
+            {
+                'C': lambda: self.label.setText('0'),
+                '\u232B': lambda: self.backspace(self.expression),
+                '=': lambda: self.evaluate()
+            }.get(self.text, lambda: self.on_click(self.window.operations))
+        )
         self.button.clicked.connect(self.func)
-    
-    def make_clear(self, func):
+
+    def make_clear(self, func: Callable) -> Callable:
         @functools.wraps(func)
         def inner():
             if self.text in self.window.operations:
@@ -127,8 +127,8 @@ class CalcCtrl:
 
         return inner
 
-    def backspace(self, text: str):
-        label = self.window.display
+    def backspace(self, text: str) -> None:
+        label: QLineEdit = self.window.display
         if len(text) != 1:
             label.setText(text[:-1])
 
@@ -145,14 +145,14 @@ class CalcCtrl:
         else:
             self.expression = self.expression + self.text
 
-    def evaluate(self):
+    def evaluate(self) -> None:
         if self.expression[-1] in self.window.operations:
             return
         self.expression = str(round(eval(self.expression.replace('\u00f7', '/').replace('\u00d7', '*')), 3))
         self.window.clear = True
 
 
-def main():
+def main() -> None:
     app: QApplication = QApplication(sys.argv)
     window: CalcUI = CalcUI()
     window.show()
