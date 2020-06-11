@@ -1,6 +1,7 @@
 import functools
 import sys
-from typing import Dict, Generator, Tuple, List, Optional, Callable
+from typing import Dict, Generator, Tuple, List, Optional, Callable, \
+    Any
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeyEvent
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, \
@@ -116,15 +117,15 @@ class CalcCtrl:
 
     def make_clear(self, func: Callable) -> Callable:
         @functools.wraps(func)
-        def inner():
+        def inner(*args: Any, **kwargs: Any) -> Any:
             if self.text in self.window.operations:
                 self.window.clear = False
 
             if self.window.clear and self.text:
                 self.label.setText('0')
                 self.window.clear = False
-            func()
 
+            return func(*args, **kwargs)
         return inner
 
     def backspace(self, text: str) -> None:
@@ -146,10 +147,9 @@ class CalcCtrl:
             self.expression = self.expression + self.text
 
     def evaluate(self) -> None:
-        if self.expression[-1] in self.window.operations:
-            return
-        self.expression = str(round(eval(self.expression.replace('\u00f7', '/').replace('\u00d7', '*')), 3))
-        self.window.clear = True
+        if self.expression[-1] not in self.window.operations:
+            self.expression = str(round(eval(self.expression.replace('\u00f7', '/').replace('\u00d7', '*')), 3))
+            self.window.clear = True
 
 
 def main() -> None:
